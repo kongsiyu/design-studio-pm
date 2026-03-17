@@ -1,0 +1,1205 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UX 设计方向 — project-manager 室内设计工作室小程序</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #F0F2F5; font-family: -apple-system, 'PingFang SC', 'Hiragino Sans GB', sans-serif; color: #1A1A1A; }
+
+  .page-header { background: #1677FF; color: white; padding: 28px 40px 20px; text-align: center; }
+  .page-header h1 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  .page-header p { font-size: 13px; opacity: 0.85; }
+
+  .nav-tabs { display: flex; justify-content: center; background: white; border-bottom: 1px solid #EBEBEB; overflow-x: auto; padding: 0 16px; }
+  .nav-tab { padding: 13px 16px; font-size: 13px; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; color: #666; transition: all 0.2s; }
+  .nav-tab.active { color: #1677FF; border-bottom-color: #1677FF; font-weight: 600; }
+  .nav-tab.final { color: #07C160; }
+  .nav-tab.final.active { color: #07C160; border-bottom-color: #07C160; }
+  .nav-tab:hover:not(.active) { color: #333; }
+
+  .direction-panel { display: none; padding: 28px 20px; }
+  .direction-panel.active { display: block; }
+
+  .direction-info { max-width: 960px; margin: 0 auto 28px; background: white; border-radius: 12px; padding: 20px 24px; border-left: 4px solid #1677FF; }
+  .direction-info.chosen { border-left-color: #07C160; }
+  .direction-info h2 { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .direction-info p { font-size: 13px; color: #666; line-height: 1.7; margin-bottom: 10px; }
+  .chosen-badge { display: inline-block; background: #E8F8EF; color: #07C160; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 10px; margin-bottom: 8px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 8px; }
+  .tag { background: #E6F0FF; color: #1677FF; font-size: 12px; padding: 3px 10px; border-radius: 16px; }
+  .tag.green { background: #E8F8EF; color: #07C160; }
+  .tag.orange { background: #FFF3EC; color: #FF7B35; }
+  .tag.gray { background: #F5F5F5; color: #666; }
+
+  .screens-row { display: flex; gap: 24px; justify-content: center; flex-wrap: wrap; max-width: 1100px; margin: 0 auto; }
+  .screen-wrapper { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .screen-label { font-size: 12px; color: #666; font-weight: 500; }
+
+  /* Phone frame */
+  .phone { width: 320px; height: 640px; background: white; border-radius: 36px; box-shadow: 0 8px 36px rgba(0,0,0,0.16), 0 0 0 8px #1A1A1A, 0 0 0 10px #333; overflow: hidden; position: relative; flex-shrink: 0; }
+  .phone-status { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; font-size: 11px; font-weight: 600; }
+  .phone-content { height: calc(640px - 44px - 56px); overflow: hidden; }
+  .phone-tabbar { height: 56px; border-top: 1px solid #EBEBEB; display: flex; align-items: center; justify-content: space-around; background: white; position: absolute; bottom: 0; left: 0; right: 0; }
+  .tab-item { display: flex; flex-direction: column; align-items: center; gap: 3px; font-size: 10px; color: #999; }
+  .tab-item.active { color: #1677FF; }
+  .tab-item.active-green { color: #07C160; }
+
+  /* ===== DIRECTION B UPDATED: 财务摘要仪表盘 ===== */
+  .dir-b .phone { background: #F7F8FA; }
+  .dir-b .phone-status { background: #1677FF; color: white; }
+  .dir-b .hero-banner { background: linear-gradient(135deg, #1677FF 0%, #0E5FCC 100%); padding: 14px 20px 18px; color: white; }
+  .dir-b .hero-greeting { font-size: 12px; opacity: 0.8; margin-bottom: 3px; }
+  .dir-b .hero-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; }
+  .dir-b .hero-stats { display: flex; }
+  .dir-b .hero-stat { flex: 1; }
+  .dir-b .hero-stat-val { font-size: 19px; font-weight: 700; font-family: 'Courier New', monospace; }
+  .dir-b .hero-stat-val.warn { color: #FFD666; }
+  .dir-b .hero-stat-val.count { font-size: 22px; }
+  .dir-b .hero-stat-lbl { font-size: 10px; opacity: 0.75; margin-top: 2px; }
+  .dir-b .hero-stat-sub { font-size: 10px; opacity: 0.6; margin-top: 1px; }
+  .dir-b .hero-divider { width: 1px; background: rgba(255,255,255,0.25); margin: 4px 10px; }
+  .dir-b .alert-strip { background: #FFF3EC; border-left: 3px solid #FF976A; margin: 8px 12px 0; border-radius: 0 8px 8px 0; padding: 7px 12px; font-size: 12px; color: #FF7B35; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .dir-b .project-scroll { padding: 10px 12px 0; }
+  .dir-b .proj-card { background: white; border-radius: 12px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .dir-b .proj-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .dir-b .proj-name { font-size: 14px; font-weight: 600; }
+  .dir-b .proj-stage { font-size: 11px; color: #1677FF; background: #E6F0FF; padding: 2px 8px; border-radius: 10px; }
+  .dir-b .proj-stage.done { color: #07C160; background: #E8F8EF; }
+  .dir-b .proj-fin { display: flex; justify-content: space-between; font-size: 12px; }
+  .dir-b .proj-fin-item { text-align: center; }
+  .dir-b .proj-fin-val { font-size: 13px; font-weight: 600; font-family: 'Courier New', monospace; display: block; }
+  .dir-b .proj-fin-val.green { color: #07C160; }
+  .dir-b .proj-fin-val.orange { color: #FF976A; }
+  .dir-b .proj-fin-lbl { color: #999; font-size: 10px; }
+  .dir-b .steps { display: flex; gap: 2px; margin-top: 8px; }
+  .dir-b .step-dot { height: 4px; flex: 1; border-radius: 2px; background: #EBEBEB; }
+  .dir-b .step-dot.done { background: #07C160; }
+  .dir-b .step-dot.active { background: #1677FF; }
+  .dir-b .quick-entry { position: absolute; bottom: 56px; left: 0; right: 0; background: white; border-top: 1px solid #EBEBEB; padding: 8px 14px; display: flex; gap: 10px; }
+  .dir-b .q-btn { flex: 1; padding: 9px 0; border-radius: 8px; font-size: 13px; font-weight: 500; text-align: center; border: none; cursor: pointer; }
+  .dir-b .q-btn.primary { background: #1677FF; color: white; }
+  .dir-b .q-btn.sec { background: #F5F5F5; color: #333; }
+
+  /* ===== DIRECTION E UPDATED: 核销紧凑列表+置信度分级 ===== */
+  .dir-e .phone { background: #F7F8FA; }
+  .dir-e .phone-status { background: white; color: #1A1A1A; }
+  .dir-e .recon-header { background: white; padding: 13px 18px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #EBEBEB; }
+  .dir-e .recon-title { font-size: 16px; font-weight: 600; }
+  .dir-e .recon-meta { font-size: 12px; color: #999; }
+  .dir-e .legend-row { background: white; padding: 8px 18px; border-bottom: 1px solid #F0F0F0; display: flex; gap: 14px; align-items: center; }
+  .dir-e .legend-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #666; }
+  .dir-e .legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+  .dir-e .legend-dot.high { background: #E8F8EF; border: 1px solid #07C160; }
+  .dir-e .legend-dot.mid { background: #FFFFFF; border: 1px solid #EBEBEB; }
+  .dir-e .legend-dot.low { background: #FFF3EC; border: 1px solid #FF976A; }
+  .dir-e .recon-list { padding: 8px 12px 0; }
+  /* High confidence row */
+  .dir-e .recon-row { border-radius: 10px; margin-bottom: 6px; overflow: hidden; cursor: pointer; }
+  .dir-e .recon-row-inner { padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
+  .dir-e .recon-row.high .recon-row-inner { background: #F0FBF5; border: 1px solid #B7EAC9; }
+  .dir-e .recon-row.mid .recon-row-inner { background: white; border: 1px solid #EBEBEB; }
+  .dir-e .recon-row.low .recon-row-inner { background: #FFF8F3; border: 1px solid #FFD4B3; }
+  .dir-e .row-check { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #CCCCCC; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 10px; }
+  .dir-e .row-check.checked { background: #07C160; border-color: #07C160; color: white; }
+  .dir-e .row-check.warn { border-color: #FF976A; }
+  .dir-e .row-main { flex: 1; min-width: 0; }
+  .dir-e .row-amount { font-size: 15px; font-weight: 700; font-family: 'Courier New', monospace; }
+  .dir-e .row-desc { font-size: 11px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+  .dir-e .row-match { text-align: right; flex-shrink: 0; }
+  .dir-e .match-project { font-size: 11px; font-weight: 500; color: #07C160; }
+  .dir-e .match-project.warn { color: #FF976A; }
+  .dir-e .match-conf { font-size: 10px; color: #999; margin-top: 2px; }
+  .dir-e .manual-tag { font-size: 10px; color: #FF976A; font-weight: 500; }
+  /* Expanded row */
+  .dir-e .recon-row.expanded .recon-row-inner { flex-direction: column; align-items: flex-start; }
+  .dir-e .expand-detail { width: 100%; margin-top: 8px; background: #E8F8EF; border-radius: 6px; padding: 8px 10px; font-size: 11px; color: #333; line-height: 1.7; }
+  .dir-e .expand-detail.warn { background: #FFF3EC; }
+  .dir-e .expand-actions { display: flex; gap: 8px; width: 100%; margin-top: 8px; }
+  .dir-e .exp-btn { flex: 1; padding: 7px 0; border-radius: 6px; border: none; font-size: 12px; font-weight: 500; text-align: center; cursor: pointer; }
+  .dir-e .exp-btn.confirm { background: #07C160; color: white; }
+  .dir-e .exp-btn.change { background: #F5F5F5; color: #333; }
+  .dir-e .exp-btn.skip { background: #F5F5F5; color: #999; }
+  /* Batch bar */
+  .dir-e .batch-bar { position: absolute; bottom: 56px; left: 0; right: 0; background: white; border-top: 1px solid #EBEBEB; padding: 9px 16px; display: flex; align-items: center; justify-content: space-between; }
+  .dir-e .batch-info { font-size: 12px; color: #666; line-height: 1.5; }
+  .dir-e .batch-info strong { color: #1A1A1A; font-size: 13px; }
+  .dir-e .batch-btn { background: #07C160; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+  /* Confirm overlay */
+  .dir-e .confirm-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-radius: 16px 16px 0 0; padding: 20px 20px 70px; box-shadow: 0 -4px 24px rgba(0,0,0,0.12); }
+  .dir-e .overlay-handle { width: 32px; height: 4px; background: #EBEBEB; border-radius: 2px; margin: 0 auto 16px; }
+  .dir-e .overlay-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .dir-e .overlay-sub { font-size: 12px; color: #666; margin-bottom: 16px; }
+  .dir-e .overlay-summary { background: #F7F8FA; border-radius: 10px; padding: 12px 16px; margin-bottom: 14px; }
+  .dir-e .sum-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; }
+  .dir-e .sum-row.total { font-weight: 600; border-top: 1px solid #EBEBEB; margin-top: 4px; padding-top: 8px; }
+  .dir-e .sum-row .val { font-family: 'Courier New', monospace; }
+  .dir-e .sum-row .val.green { color: #07C160; }
+  .dir-e .sum-row .val.orange { color: #FF976A; }
+  .dir-e .overlay-warn { font-size: 12px; color: #FF7B35; background: #FFF3EC; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; }
+  .dir-e .overlay-confirm-btn { width: 100%; background: #07C160; color: white; border: none; padding: 12px 0; border-radius: 10px; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+  /* ===== DIRECTION F UPDATED: 系统键盘+多模态录入 ===== */
+  .dir-f .phone { background: #F7F8FA; }
+  .dir-f .phone-status { background: white; color: #1A1A1A; }
+  .dir-f .entry-header { background: white; padding: 13px 18px; border-bottom: 1px solid #EBEBEB; display: flex; justify-content: space-between; align-items: center; }
+  .dir-f .entry-title { font-size: 16px; font-weight: 600; }
+  .dir-f .entry-sub { font-size: 12px; color: #999; margin-top: 2px; }
+  .dir-f .multimodal-bar { background: white; padding: 10px 18px; border-bottom: 1px solid #F0F0F0; display: flex; gap: 10px; align-items: center; }
+  .dir-f .multimodal-label { font-size: 12px; color: #999; }
+  .dir-f .modal-btn { display: flex; align-items: center; gap: 5px; background: #F5F5F5; border: none; border-radius: 20px; padding: 6px 12px; font-size: 12px; color: #333; cursor: pointer; }
+  .dir-f .modal-btn .icon { font-size: 15px; }
+  .dir-f .modal-btn.ocr { background: #E6F0FF; color: #1677FF; }
+  .dir-f .modal-btn.voice { background: #E8F8EF; color: #07C160; }
+  .dir-f .amount-area { background: white; padding: 18px 20px 14px; border-bottom: 1px solid #F0F0F0; }
+  .dir-f .amount-label { font-size: 12px; color: #999; margin-bottom: 6px; }
+  .dir-f .amount-input-row { display: flex; align-items: center; gap: 8px; }
+  .dir-f .currency { font-size: 28px; color: #1A1A1A; font-weight: 500; }
+  .dir-f .amount-value { font-size: 36px; font-weight: 700; font-family: 'Courier New', monospace; color: #1A1A1A; border-bottom: 2px solid #1677FF; padding-bottom: 4px; flex: 1; }
+  .dir-f .amount-value.empty { color: #CCCCCC; }
+  .dir-f .cat-area { background: white; padding: 12px 16px; border-bottom: 1px solid #F0F0F0; }
+  .dir-f .cat-label { font-size: 12px; color: #999; margin-bottom: 8px; }
+  .dir-f .cat-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .dir-f .cat-chip { background: #F5F5F5; color: #333; font-size: 12px; padding: 5px 12px; border-radius: 16px; cursor: pointer; }
+  .dir-f .cat-chip.selected { background: #E6F0FF; color: #1677FF; font-weight: 500; }
+  .dir-f .project-row { background: white; padding: 12px 18px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
+  .dir-f .row-label { font-size: 14px; color: #666; }
+  .dir-f .row-value { font-size: 14px; font-weight: 500; color: #1677FF; }
+  .dir-f .smart-tip { background: #E6F0FF; margin: 10px 14px; border-radius: 8px; padding: 9px 12px; display: flex; align-items: flex-start; gap: 6px; }
+  .dir-f .tip-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+  .dir-f .tip-text { font-size: 11px; color: #1677FF; line-height: 1.6; }
+  .dir-f .tip-text strong { font-weight: 600; }
+  .dir-f .note-row { background: white; padding: 11px 18px; border-bottom: 1px solid #F0F0F0; display: flex; justify-content: space-between; align-items: center; }
+  .dir-f .note-placeholder { font-size: 13px; color: #CCCCCC; }
+  .dir-f .submit-area { position: absolute; bottom: 56px; left: 0; right: 0; background: white; border-top: 1px solid #EBEBEB; padding: 10px 16px; }
+  .dir-f .submit-btn { width: 100%; background: #07C160; color: white; border: none; border-radius: 10px; padding: 12px 0; font-size: 15px; font-weight: 600; cursor: pointer; }
+  .dir-f .submit-btn.disabled { background: #CCCCCC; }
+
+  /* OCR result overlay */
+  .dir-f .ocr-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: white; border-radius: 16px 16px 0 0; padding: 16px 18px 70px; box-shadow: 0 -4px 24px rgba(0,0,0,0.12); }
+  .dir-f .ocr-handle { width: 32px; height: 4px; background: #EBEBEB; border-radius: 2px; margin: 0 auto 14px; }
+  .dir-f .ocr-title { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .dir-f .ocr-sub { font-size: 12px; color: #07C160; margin-bottom: 14px; }
+  .dir-f .ocr-fields { background: #F7F8FA; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .dir-f .ocr-field { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #F0F0F0; }
+  .dir-f .ocr-field:last-child { border-bottom: none; }
+  .dir-f .ocr-field-label { font-size: 12px; color: #999; }
+  .dir-f .ocr-field-value { font-size: 13px; font-weight: 600; }
+  .dir-f .ocr-field-value.big { font-size: 18px; font-family: 'Courier New', monospace; color: #1677FF; }
+  .dir-f .ocr-actions { display: flex; gap: 10px; }
+  .dir-f .ocr-btn { flex: 1; padding: 10px 0; border-radius: 8px; border: none; font-size: 13px; font-weight: 500; cursor: pointer; text-align: center; }
+  .dir-f .ocr-btn.confirm { background: #07C160; color: white; }
+  .dir-f .ocr-btn.redo { background: #F5F5F5; color: #333; }
+
+  /* ===== FINAL DECISION TAB ===== */
+  .final-panel .direction-info { border-left-color: #07C160; }
+  .final-panel .screens-row { gap: 20px; }
+  .final-panel .screen-label { font-weight: 600; color: #333; font-size: 13px; }
+  .decision-summary { max-width: 960px; margin: 28px auto 0; background: white; border-radius: 12px; padding: 22px 26px; }
+  .decision-summary h3 { font-size: 16px; font-weight: 600; margin-bottom: 16px; color: #1A1A1A; }
+  .decision-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  .decision-card { background: #F7F8FA; border-radius: 10px; padding: 14px 16px; }
+  .decision-card h4 { font-size: 13px; font-weight: 600; color: #1677FF; margin-bottom: 10px; }
+  .decision-card ul { list-style: none; padding: 0; }
+  .decision-card li { font-size: 12px; color: #555; padding: 3px 0; padding-left: 14px; position: relative; line-height: 1.5; }
+  .decision-card li::before { content: "✓"; position: absolute; left: 0; color: #07C160; font-size: 11px; }
+  .decision-card li.warn::before { content: "→"; color: #FF976A; }
+  @media (max-width: 700px) { .decision-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>UX 设计方向</h1>
+  <p>project-manager — 室内设计工作室项目管理与财务小程序 · 最终方案已确定</p>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab final active" onclick="showDir('final', this)">★ 最终方案</div>
+  <div class="nav-tab" onclick="showDir('b', this)">B — 首页（已选）</div>
+  <div class="nav-tab" onclick="showDir('e', this)">E — 核销（已选）</div>
+  <div class="nav-tab" onclick="showDir('f', this)">F — 录入（已选）</div>
+  <div class="nav-tab" onclick="showDir('other', this)">其他方向（存档）</div>
+  <div class="nav-tab" style="color:#7C3AED;" onclick="showDir('pc', this)">PC 管理后台</div>
+</div>
+
+<!-- ===== FINAL DECISION TAB ===== -->
+<div id="dir-final" class="direction-panel final-panel active">
+  <div class="direction-info chosen" style="max-width:960px;margin:0 auto 28px;">
+    <div class="chosen-badge">已确定方向</div>
+    <h2>最终设计方向总览</h2>
+    <p>首页采用方向 B（财务摘要仪表盘），核销界面采用置信度分级紧凑列表，录入界面使用系统键盘 + 多模态输入。三屏共同构成 project-manager 的核心交互体验。</p>
+  </div>
+  <div class="screens-row">
+    <!-- HOME B -->
+    <div class="screen-wrapper">
+      <div class="screen-label">首页 — 财务摘要仪表盘</div>
+      <div class="phone dir-b">
+        <div class="phone-status" style="background:#1677FF;color:white;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="hero-banner">
+            <div class="hero-greeting">3月 · 4个在建项目</div>
+            <div class="hero-title">本月资金概况</div>
+            <div class="hero-stats">
+              <div class="hero-stat">
+                <div class="hero-stat-val warn">¥229k</div>
+                <div class="hero-stat-lbl">本期应收</div>
+                <div class="hero-stat-sub">3月到期</div>
+              </div>
+              <div class="hero-divider"></div>
+              <div class="hero-stat">
+                <div class="hero-stat-val">¥186k</div>
+                <div class="hero-stat-lbl">本月已到账</div>
+                <div class="hero-stat-sub">实际入账</div>
+              </div>
+              <div class="hero-divider"></div>
+              <div class="hero-stat">
+                <div class="hero-stat-val count">2</div>
+                <div class="hero-stat-lbl">待核销</div>
+                <div class="hero-stat-sub">笔流水</div>
+              </div>
+            </div>
+          </div>
+          <div class="alert-strip">⚠ 2笔银行流水待核销 →</div>
+          <div class="project-scroll">
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">颐和园别墅项目</div><div class="proj-stage">施工图设计</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥320k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥192k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val orange">¥128k</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">朝阳区公寓改造</div><div class="proj-stage done">竣工验收</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥88k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥88k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val" style="color:#999;">¥0</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">海淀区办公室</div><div class="proj-stage">方案设计</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥145k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥43k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val orange">¥101k</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="quick-entry"><div class="q-btn sec">+ 录入费用</div><div class="q-btn primary">+ 录入收款</div></div>
+        <div class="phone-tabbar">
+          <div class="tab-item active"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RECON E UPDATED -->
+    <div class="screen-wrapper">
+      <div class="screen-label">核销 Tab — 置信度分级列表</div>
+      <div class="phone dir-e">
+        <div class="phone-status" style="background:white;color:#1A1A1A;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="recon-header">
+            <div><div class="recon-title">待核销流水</div><div class="recon-meta">共5笔 · 3笔高置信</div></div>
+            <div style="font-size:12px;color:#1677FF;cursor:pointer;">筛选</div>
+          </div>
+          <div class="legend-row">
+            <div class="legend-item"><div class="legend-dot high"></div>高置信</div>
+            <div class="legend-item"><div class="legend-dot mid"></div>中置信</div>
+            <div class="legend-item"><div class="legend-dot low"></div>需人工</div>
+          </div>
+          <div class="recon-list">
+            <!-- High confidence expanded -->
+            <div class="recon-row high expanded">
+              <div class="recon-row-inner">
+                <div class="row-check checked">✓</div>
+                <div class="row-main">
+                  <div class="row-amount">¥128,000</div>
+                  <div class="row-desc">招商银行 3/14 · 颐和园 王先生 设计款</div>
+                </div>
+                <div class="row-match">
+                  <div class="match-project">颐和园别墅·第3期</div>
+                  <div class="match-conf">金额✓ 日期✓ 关键词✓</div>
+                </div>
+              </div>
+              <div class="expand-detail">
+                <strong>匹配依据：</strong>金额完全吻合 · 日期差2天 · 摘要含"颐和园"<br>
+                <strong>置信度：高（自动勾选）</strong>
+              </div>
+              <div class="expand-actions">
+                <div class="exp-btn confirm">确认核销</div>
+                <div class="exp-btn change">修改匹配</div>
+                <div class="exp-btn skip">跳过</div>
+              </div>
+            </div>
+            <!-- High confidence -->
+            <div class="recon-row high">
+              <div class="recon-row-inner">
+                <div class="row-check checked">✓</div>
+                <div class="row-main">
+                  <div class="row-amount">¥43,500</div>
+                  <div class="row-desc">招商银行 3/15 · 海淀办公室首付款</div>
+                </div>
+                <div class="row-match">
+                  <div class="match-project">海淀区办公室·首付</div>
+                  <div class="match-conf">金额✓ 日期✓ 关键词✓</div>
+                </div>
+              </div>
+            </div>
+            <!-- Mid confidence -->
+            <div class="recon-row mid">
+              <div class="recon-row-inner">
+                <div class="row-check"></div>
+                <div class="row-main">
+                  <div class="row-amount">¥12,000</div>
+                  <div class="row-desc">工商银行 3/16 · 转账</div>
+                </div>
+                <div class="row-match">
+                  <div class="match-project" style="color:#666;">朝阳区公寓?</div>
+                  <div class="match-conf">金额✓ 无关键词</div>
+                </div>
+              </div>
+            </div>
+            <!-- Low confidence -->
+            <div class="recon-row low">
+              <div class="recon-row-inner">
+                <div class="row-check warn"></div>
+                <div class="row-main">
+                  <div class="row-amount" style="color:#FF976A;">¥8,800</div>
+                  <div class="row-desc">建设银行 3/12 · 货款</div>
+                </div>
+                <div class="row-match">
+                  <div class="manual-tag">需人工处理</div>
+                  <div class="match-conf">无匹配记录</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="batch-bar">
+          <div class="batch-info">
+            <strong>确认3笔高置信</strong><br>
+            共 ¥171,500 · 1笔需人工处理
+          </div>
+          <div class="batch-btn">一键确认</div>
+        </div>
+        <div class="phone-tabbar">
+          <div class="tab-item"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item active-green"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENTRY F UPDATED -->
+    <div class="screen-wrapper">
+      <div class="screen-label">录入界面 — 系统键盘 + 多模态</div>
+      <div class="phone dir-f">
+        <div class="phone-status" style="background:white;color:#1A1A1A;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="entry-header">
+            <div><div class="entry-title">录入费用</div><div class="entry-sub">颐和园别墅项目</div></div>
+            <div style="font-size:12px;color:#999;cursor:pointer;">取消</div>
+          </div>
+          <div class="multimodal-bar">
+            <div class="multimodal-label">快速录入：</div>
+            <button class="modal-btn ocr"><span class="icon">📷</span>拍发票</button>
+            <button class="modal-btn voice"><span class="icon">🎙</span>语音</button>
+          </div>
+          <div class="amount-area">
+            <div class="amount-label">金额</div>
+            <div class="amount-input-row">
+              <span class="currency">¥</span>
+              <div class="amount-value empty">0.00</div>
+            </div>
+            <div style="font-size:11px;color:#999;margin-top:6px;">点击输入，唤起系统数字键盘</div>
+          </div>
+          <div class="cat-area">
+            <div class="cat-label">费用类别</div>
+            <div class="cat-chips">
+              <div class="cat-chip selected">材料费</div>
+              <div class="cat-chip">施工费</div>
+              <div class="cat-chip">设计费</div>
+              <div class="cat-chip">外包费</div>
+              <div class="cat-chip">差旅</div>
+            </div>
+          </div>
+          <div class="project-row">
+            <span class="row-label">关联项目</span>
+            <span class="row-value">颐和园别墅项目 ›</span>
+          </div>
+          <div class="smart-tip">
+            <div class="tip-icon">✨</div>
+            <div class="tip-text">上次录入：<strong>外包设计费 ¥8,000</strong><br>点击快速复用此记录</div>
+          </div>
+          <div class="note-row">
+            <span class="row-label" style="font-size:14px;color:#666;">备注</span>
+            <span class="note-placeholder">可选，补充说明...</span>
+          </div>
+        </div>
+        <div class="submit-area">
+          <button class="submit-btn disabled">请输入金额</button>
+        </div>
+        <div class="phone-tabbar">
+          <div class="tab-item"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="decision-summary">
+    <h3>已确定设计决策摘要</h3>
+    <div class="decision-grid">
+      <div class="decision-card">
+        <h4>首页 — 方向 B</h4>
+        <ul>
+          <li>蓝色横幅展示当期三指标</li>
+          <li>本期应收（本月到期）</li>
+          <li>本月已到账（实际入账）</li>
+          <li>待核销笔数（行动导向）</li>
+          <li>橙色预警条动态出现</li>
+          <li>下方项目卡片含阶段进度</li>
+          <li class="warn">横幅数据单次聚合查询</li>
+        </ul>
+      </div>
+      <div class="decision-card">
+        <h4>核销界面 — 置信度分级</h4>
+        <ul>
+          <li>紧凑行列表，一屏8-10笔</li>
+          <li>绿色行 = 高置信（默认勾选）</li>
+          <li>白色行 = 中置信（手动确认）</li>
+          <li>橙色行 = 低置信（需人工处理）</li>
+          <li>点击行展开匹配详情</li>
+          <li>批量确认仅处理高置信项</li>
+          <li class="warn">汇总层明确显示排除笔数</li>
+        </ul>
+      </div>
+      <div class="decision-card">
+        <h4>录入界面 — 多模态</h4>
+        <ul>
+          <li>系统原生数字键盘（type=digit）</li>
+          <li>类别快选chips无需搜索</li>
+          <li>智能预填上次记录</li>
+          <li>一期：拍照OCR（仅增值税发票）</li>
+          <li>二期：语音录入（需确认步骤）</li>
+          <li class="warn">OCR结果须用户确认后提交</li>
+          <li class="warn">语音识别结果大字号展示</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== B HOME TAB ===== -->
+<div id="dir-b" class="direction-panel dir-b">
+  <div class="direction-info chosen">
+    <div class="chosen-badge">已选 — 首页方向</div>
+    <h2>方向 B — 财务摘要仪表盘（定稿）</h2>
+    <p>顶部蓝色横幅展示<strong>当期三指标</strong>（本期应收 / 本月已到账 / 待核销笔数），打开即见资金状态。三个数字严格为当期维度，避免历史总额造成数字虚高的误导感。橙色预警条仅在有待核销/超期时动态出现。</p>
+    <div class="tags"><span class="tag green">已确定</span><span class="tag">当期维度</span><span class="tag orange">主理人优先</span><span class="tag">掌控感最强</span></div>
+  </div>
+  <div class="screens-row">
+    <div class="screen-wrapper">
+      <div class="screen-label">正常状态（有待核销预警）</div>
+      <div class="phone">
+        <div class="phone-status" style="background:#1677FF;color:white;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="hero-banner">
+            <div class="hero-greeting">早上好，Sue · 3月</div>
+            <div class="hero-title">本月资金概况</div>
+            <div class="hero-stats">
+              <div class="hero-stat"><div class="hero-stat-val warn">¥229k</div><div class="hero-stat-lbl">本期应收</div><div class="hero-stat-sub">3月到期</div></div>
+              <div class="hero-divider"></div>
+              <div class="hero-stat"><div class="hero-stat-val">¥186k</div><div class="hero-stat-lbl">本月已到账</div><div class="hero-stat-sub">实际入账</div></div>
+              <div class="hero-divider"></div>
+              <div class="hero-stat"><div class="hero-stat-val count">2</div><div class="hero-stat-lbl">待核销</div><div class="hero-stat-sub">笔流水</div></div>
+            </div>
+          </div>
+          <div class="alert-strip">⚠ 2笔银行流水待核销，点击处理 →</div>
+          <div class="project-scroll">
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">颐和园别墅项目</div><div class="proj-stage">施工图设计</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥320k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥192k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val orange">¥128k</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">朝阳区公寓改造</div><div class="proj-stage done">竣工验收</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥88k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥88k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val" style="color:#999;">¥0</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">海淀区办公室</div><div class="proj-stage">方案设计</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥145k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥43k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val orange">¥101k</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="quick-entry"><div class="q-btn sec">+ 录入费用</div><div class="q-btn primary">+ 录入收款</div></div>
+        <div class="phone-tabbar">
+          <div class="tab-item active"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-wrapper">
+      <div class="screen-label">理想状态（全部到账，无预警）</div>
+      <div class="phone">
+        <div class="phone-status" style="background:#1677FF;color:white;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="hero-banner">
+            <div class="hero-greeting">早上好，Sue · 3月</div>
+            <div class="hero-title">本月资金概况</div>
+            <div class="hero-stats">
+              <div class="hero-stat"><div class="hero-stat-val">¥229k</div><div class="hero-stat-lbl">本期应收</div><div class="hero-stat-sub">3月到期</div></div>
+              <div class="hero-divider"></div>
+              <div class="hero-stat"><div class="hero-stat-val" style="color:#A8EDCA;">¥229k</div><div class="hero-stat-lbl">本月已到账</div><div class="hero-stat-sub">100% 回款</div></div>
+              <div class="hero-divider"></div>
+              <div class="hero-stat"><div class="hero-stat-val count" style="color:#A8EDCA;">0</div><div class="hero-stat-lbl">待核销</div><div class="hero-stat-sub">全部完成</div></div>
+            </div>
+          </div>
+          <div style="background:#E8F8EF;padding:8px 12px 0 12px;margin-top:8px;">
+            <div style="font-size:12px;color:#07C160;padding:7px 12px;background:white;border-radius:8px;margin-bottom:8px;">✓ 本月所有流水已核销，很棒！</div>
+          </div>
+          <div class="project-scroll">
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">颐和园别墅项目</div><div class="proj-stage">施工图设计</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥320k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥320k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val" style="color:#999;">¥0</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+            </div>
+            <div class="proj-card">
+              <div class="proj-header"><div class="proj-name">朝阳区公寓改造</div><div class="proj-stage done">竣工验收</div></div>
+              <div class="proj-fin">
+                <div class="proj-fin-item"><span class="proj-fin-val">¥88k</span><span class="proj-fin-lbl">合同额</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val green">¥88k</span><span class="proj-fin-lbl">已到账</span></div>
+                <div class="proj-fin-item"><span class="proj-fin-val" style="color:#999;">¥0</span><span class="proj-fin-lbl">本月应收</span></div>
+              </div>
+              <div class="steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="quick-entry"><div class="q-btn sec">+ 录入费用</div><div class="q-btn primary">+ 录入收款</div></div>
+        <div class="phone-tabbar">
+          <div class="tab-item active"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== E RECON TAB ===== -->
+<div id="dir-e" class="direction-panel dir-e">
+  <div class="direction-info chosen">
+    <div class="chosen-badge">已选 — 核销界面</div>
+    <h2>核销界面 — 置信度分级紧凑列表（定稿）</h2>
+    <p>解决多笔数据滚动体验问题：默认<strong>紧凑行列表</strong>，一屏显示8-10笔；按<strong>置信度颜色分级</strong>（绿/白/橙）；点击单行展开匹配详情；"一键全部确认"仅处理高置信项，汇总确认层显示排除情况。</p>
+    <div class="tags"><span class="tag green">已确定</span><span class="tag">紧凑列表</span><span class="tag">置信度分级</span><span class="tag orange">防误操作</span></div>
+  </div>
+  <div class="screens-row">
+    <div class="screen-wrapper">
+      <div class="screen-label">列表视图（默认）</div>
+      <div class="phone dir-e">
+        <div class="phone-status" style="background:white;color:#1A1A1A;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="recon-header"><div><div class="recon-title">待核销流水</div><div class="recon-meta">共5笔 · 3笔高置信</div></div><div style="font-size:12px;color:#1677FF;">筛选</div></div>
+          <div class="legend-row">
+            <div class="legend-item"><div class="legend-dot high"></div>高置信（默认勾选）</div>
+            <div class="legend-item"><div class="legend-dot mid"></div>中置信</div>
+            <div class="legend-item"><div class="legend-dot low"></div>需人工</div>
+          </div>
+          <div class="recon-list">
+            <div class="recon-row high"><div class="recon-row-inner"><div class="row-check checked">✓</div><div class="row-main"><div class="row-amount">¥128,000</div><div class="row-desc">招行 3/14 · 颐和园 王先生 设计款</div></div><div class="row-match"><div class="match-project">颐和园别墅·第3期</div><div class="match-conf">金额✓ 日期✓ 关键词✓</div></div></div></div>
+            <div class="recon-row high"><div class="recon-row-inner"><div class="row-check checked">✓</div><div class="row-main"><div class="row-amount">¥43,500</div><div class="row-desc">招行 3/15 · 海淀办公室首付款</div></div><div class="row-match"><div class="match-project">海淀区办公室·首付</div><div class="match-conf">金额✓ 日期✓ 关键词✓</div></div></div></div>
+            <div class="recon-row high"><div class="recon-row-inner"><div class="row-check checked">✓</div><div class="row-main"><div class="row-amount">¥22,000</div><div class="row-desc">招行 3/16 · 朝阳公寓 尾款</div></div><div class="row-match"><div class="match-project">朝阳区公寓·尾款</div><div class="match-conf">金额✓ 日期✓ 关键词✓</div></div></div></div>
+            <div class="recon-row mid"><div class="recon-row-inner"><div class="row-check"></div><div class="row-main"><div class="row-amount">¥12,000</div><div class="row-desc">工行 3/16 · 转账</div></div><div class="row-match"><div class="match-project" style="color:#666;">朝阳公寓?</div><div class="match-conf">金额✓ 无关键词</div></div></div></div>
+            <div class="recon-row low"><div class="recon-row-inner"><div class="row-check warn"></div><div class="row-main"><div class="row-amount" style="color:#FF976A;">¥8,800</div><div class="row-desc">建行 3/12 · 货款</div></div><div class="row-match"><div class="manual-tag">需人工处理</div><div class="match-conf">无匹配</div></div></div></div>
+          </div>
+        </div>
+        <div class="batch-bar"><div class="batch-info"><strong>确认3笔高置信</strong><br>共 ¥193,500 · 2笔需人工</div><div class="batch-btn">一键确认</div></div>
+        <div class="phone-tabbar">
+          <div class="tab-item"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item active-green"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-wrapper">
+      <div class="screen-label">汇总确认层（点击一键确认后）</div>
+      <div class="phone dir-e">
+        <div class="phone-status" style="background:white;color:#1A1A1A;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content" style="filter:brightness(0.6)">
+          <div class="recon-header"><div><div class="recon-title">待核销流水</div></div></div>
+          <div class="recon-list" style="padding-top:8px;">
+            <div class="recon-row high"><div class="recon-row-inner"><div class="row-check checked">✓</div><div class="row-main"><div class="row-amount">¥128,000</div><div class="row-desc">招行 3/14</div></div></div></div>
+            <div class="recon-row high"><div class="recon-row-inner"><div class="row-check checked">✓</div><div class="row-main"><div class="row-amount">¥43,500</div><div class="row-desc">招行 3/15</div></div></div></div>
+          </div>
+        </div>
+        <div class="confirm-overlay">
+          <div class="overlay-handle"></div>
+          <div class="overlay-title">确认批量核销</div>
+          <div class="overlay-sub">请检查以下内容，确认后不可撤销</div>
+          <div class="overlay-summary">
+            <div class="sum-row"><span>高置信笔数</span><span class="val green">3 笔</span></div>
+            <div class="sum-row"><span>核销总金额</span><span class="val green">¥193,500.00</span></div>
+            <div class="sum-row total"><span>已自动排除</span><span class="val orange">2 笔（需人工处理）</span></div>
+          </div>
+          <div class="overlay-warn">⚠ 中置信1笔 + 无匹配1笔已排除，核销后请手动处理</div>
+          <button class="overlay-confirm-btn">确认核销 3 笔</button>
+        </div>
+        <div class="phone-tabbar">
+          <div class="tab-item"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item active-green"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== F ENTRY TAB ===== -->
+<div id="dir-f" class="direction-panel dir-f">
+  <div class="direction-info chosen">
+    <div class="chosen-badge">已选 — 录入界面</div>
+    <h2>录入界面 — 系统键盘 + 多模态输入（定稿）</h2>
+    <p>移除常驻自定义数字键盘，改用系统原生键盘。顶部增加<strong>多模态快速录入入口</strong>（📷 拍发票 OCR / 🎙 语音录入），OCR 结果需用户确认后方可提交，防止静默错误。</p>
+    <div class="tags"><span class="tag green">已确定</span><span class="tag">系统键盘</span><span class="tag">拍照OCR</span><span class="tag gray">语音二期</span></div>
+  </div>
+  <div class="screens-row">
+    <div class="screen-wrapper">
+      <div class="screen-label">手动录入界面</div>
+      <div class="phone dir-f">
+        <div class="phone-status" style="background:white;color:#1A1A1A;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content">
+          <div class="entry-header"><div><div class="entry-title">录入费用</div><div class="entry-sub">颐和园别墅项目</div></div><div style="font-size:12px;color:#999;">取消</div></div>
+          <div class="multimodal-bar"><div class="multimodal-label">快速录入：</div><button class="modal-btn ocr">📷 拍发票</button><button class="modal-btn voice">🎙 语音</button></div>
+          <div class="amount-area">
+            <div class="amount-label">金额（点击输入）</div>
+            <div class="amount-input-row"><span class="currency">¥</span><div class="amount-value">12,500.00</div></div>
+            <div style="font-size:11px;color:#999;margin-top:6px;">使用系统数字键盘输入</div>
+          </div>
+          <div class="cat-area">
+            <div class="cat-label">费用类别</div>
+            <div class="cat-chips">
+              <div class="cat-chip selected">材料费</div>
+              <div class="cat-chip">施工费</div>
+              <div class="cat-chip">设计费</div>
+              <div class="cat-chip">外包费</div>
+              <div class="cat-chip">差旅</div>
+            </div>
+          </div>
+          <div class="project-row"><span class="row-label">关联项目</span><span class="row-value">颐和园别墅项目 ›</span></div>
+          <div class="smart-tip"><div class="tip-icon">✨</div><div class="tip-text">上次录入：<strong>外包设计费 ¥8,000</strong><br>点击快速复用</div></div>
+          <div class="note-row"><span class="row-label" style="font-size:14px;color:#666;">备注</span><span class="note-placeholder">可选...</span></div>
+        </div>
+        <div class="submit-area"><button class="submit-btn">确认录入 ¥12,500</button></div>
+        <div class="phone-tabbar">
+          <div class="tab-item"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-wrapper">
+      <div class="screen-label">OCR 识别结果确认层</div>
+      <div class="phone dir-f">
+        <div class="phone-status" style="background:white;color:#1A1A1A;"><span>9:41</span><span>●●● WiFi 🔋</span></div>
+        <div class="phone-content" style="filter:brightness(0.65)">
+          <div class="entry-header"><div><div class="entry-title">录入费用</div></div></div>
+          <div class="amount-area"><div class="amount-label">金额</div><div class="amount-input-row"><span class="currency">¥</span><div class="amount-value empty">0.00</div></div></div>
+          <div class="cat-area"><div class="cat-label">费用类别</div><div class="cat-chips"><div class="cat-chip">材料费</div><div class="cat-chip">施工费</div></div></div>
+        </div>
+        <div class="ocr-overlay">
+          <div class="ocr-handle"></div>
+          <div class="ocr-title">发票识别结果</div>
+          <div class="ocr-sub">✓ 已识别增值税专用发票，请确认后填入</div>
+          <div class="ocr-fields">
+            <div class="ocr-field"><span class="ocr-field-label">识别金额</span><span class="ocr-field-value big">¥12,500.00</span></div>
+            <div class="ocr-field"><span class="ocr-field-label">开票单位</span><span class="ocr-field-value">北京XX材料有限公司</span></div>
+            <div class="ocr-field"><span class="ocr-field-label">开票日期</span><span class="ocr-field-value">2026-03-16</span></div>
+            <div class="ocr-field"><span class="ocr-field-label">建议类别</span><span class="ocr-field-value" style="color:#1677FF;">材料费</span></div>
+          </div>
+          <div class="ocr-actions">
+            <div class="ocr-btn redo">重新拍照</div>
+            <div class="ocr-btn confirm">使用此结果</div>
+          </div>
+        </div>
+        <div class="phone-tabbar">
+          <div class="tab-item"><div style="font-size:18px">🏠</div>首页</div>
+          <div class="tab-item"><div style="font-size:18px">📁</div>项目</div>
+          <div class="tab-item"><div style="font-size:18px">✅</div>核销</div>
+          <div class="tab-item"><div style="font-size:18px">👤</div>我</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== OTHER DIRECTIONS (ARCHIVE) ===== -->
+<div id="dir-other" class="direction-panel">
+  <div class="direction-info" style="border-left-color:#CCCCCC;">
+    <h2>其他方向存档（A / C / D）</h2>
+    <p>以下方向在探索阶段已评估，未被选为最终方案，但记录供参考。如后续需要调整首页方向，可在此基础上快速迭代。</p>
+    <div class="tags"><span class="tag gray">存档参考</span><span class="tag gray">未选用</span></div>
+  </div>
+  <div style="max-width:700px;margin:0 auto;background:white;border-radius:12px;padding:24px;">
+    <table style="width:100%;border-collapse:collapse;font-size:13px;">
+      <thead><tr style="background:#F7F8FA;"><th style="padding:10px 14px;text-align:left;border-bottom:2px solid #EBEBEB;">方向</th><th style="padding:10px 14px;border-bottom:2px solid #EBEBEB;">特点</th><th style="padding:10px 14px;border-bottom:2px solid #EBEBEB;">未选原因</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">A 极简卡片流</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">白底卡片，微信原生感最强</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#999;">财务全貌不够直接，主理人需要再点击才能看资金概况</td></tr>
+        <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">C 阶段分组视图</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">按设计阶段分组展示</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#999;">财务数据优先级低于项目管理，与主理人使用心态不符</td></tr>
+        <tr><td style="padding:10px 14px;font-weight:600;">D 大数字焦点</td><td style="padding:10px 14px;color:#555;">4格大数字网格，掌控感强</td><td style="padding:10px 14px;color:#999;">与 B 方向高度接近，B 的项目列表更完整；可作为 B 的备选</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ===== PC 管理后台 ===== -->
+<div id="dir-pc" class="direction-panel">
+  <div class="direction-info" style="border-left-color:#7C3AED;max-width:960px;margin:0 auto 28px;">
+    <h2 style="color:#7C3AED;">PC 管理后台 — UX 规格 &amp; 后端规范</h2>
+    <p>基于 PRD PC Web Management Platform 章节补充。移动端设计不变，本章节仅覆盖 PC 端。</p>
+    <div class="tags">
+      <span class="tag" style="background:#F3F0FF;color:#7C3AED;">uni-admin</span>
+      <span class="tag" style="background:#F3F0FF;color:#7C3AED;">uniCloud</span>
+      <span class="tag gray">辅助平台</span>
+    </div>
+  </div>
+
+  <div style="max-width:960px;margin:0 auto;display:flex;flex-direction:column;gap:24px;">
+
+    <!-- 框架选型 -->
+    <div style="background:white;border-radius:12px;padding:24px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;color:#7C3AED;">框架选型：uni-admin</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead><tr style="background:#F7F8FA;"><th style="padding:10px 14px;text-align:left;border-bottom:2px solid #EBEBEB;">维度</th><th style="padding:10px 14px;text-align:left;border-bottom:2px solid #EBEBEB;">uni-admin 优势</th></tr></thead>
+        <tbody>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">用户体系</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">内置 uni-id，PC端与小程序账号天然同库，无需额外打通</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">权限架子</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">内置角色权限数据模型，MVP全权限，Phase 2 直接配置无需重构</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">操作日志</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">内置后台静默记录，零额外开发</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">技术栈统一</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">uniCloud + uni-ui，与小程序端共用云函数和数据模型</td></tr>
+          <tr><td style="padding:10px 14px;font-weight:600;">交付速度</td><td style="padding:10px 14px;color:#555;">认证/权限/日志/菜单开箱即得，节省约 1-2 周基础设施搭建</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:14px;padding:12px 16px;background:#F3F0FF;border-radius:8px;font-size:13px;color:#5B21B6;">
+        <strong>定制范围（仅以下两项）：</strong> 覆盖主色为 <code style="background:rgba(0,0,0,0.06);padding:1px 5px;border-radius:3px;">#1677FF</code>；替换 Logo 和系统名称。PC端是内部工具，功能优先于视觉定制。
+      </div>
+    </div>
+
+    <!-- 信息架构 + 布局 并排 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+      <!-- 信息架构 -->
+      <div style="background:white;border-radius:12px;padding:24px;">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">侧边导航菜单结构</h3>
+        <div style="font-size:13px;line-height:2;color:#333;">
+          <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;background:#F3F0FF;border-radius:6px;margin-bottom:4px;font-weight:600;color:#7C3AED;">
+            <span>📊</span> 首页 Dashboard
+            <span style="font-size:11px;color:#9CA3AF;font-weight:400;margin-left:auto;">MVP 可用报表页替代</span>
+          </div>
+          <div style="padding-left:12px;">
+            <div style="border-left:2px solid #EBEBEB;padding-left:12px;display:flex;flex-direction:column;gap:2px;">
+              <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#F7F8FA;">👥 客户管理</div>
+              <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#F7F8FA;">🏪 供应商管理</div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#F7F8FA;">📁 项目管理</div>
+                <div style="padding-left:20px;font-size:12px;color:#666;margin:2px 0 4px;">└ 归档项目</div>
+              </div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#F7F8FA;">💸 费用管理</div>
+                <div style="padding-left:20px;font-size:12px;color:#666;margin:2px 0 4px;">└ 核销记录</div>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#F7F8FA;">💰 收款管理</div>
+              <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#E8F8EF;color:#07C160;font-weight:600;">📈 报表统计 <span style="font-size:11px;background:#07C160;color:white;padding:1px 6px;border-radius:10px;margin-left:auto;">Excel 导出</span></div>
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:5px;background:#F7F8FA;">⚙️ 系统设置</div>
+                <div style="padding-left:20px;font-size:12px;color:#666;margin:2px 0;">└ 用户账号管理</div>
+                <div style="padding-left:20px;font-size:12px;color:#666;margin:2px 0;">└ 费用类别配置</div>
+                <div style="padding-left:20px;font-size:12px;color:#666;margin:2px 0 4px;">└ 应收阶段定义</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 布局示意 -->
+      <div style="background:white;border-radius:12px;padding:24px;">
+        <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">整体布局结构</h3>
+        <!-- 浏览器框架 -->
+        <div style="border:2px solid #EBEBEB;border-radius:8px;overflow:hidden;font-size:12px;">
+          <!-- 浏览器顶栏 -->
+          <div style="background:#F7F8FA;padding:7px 12px;border-bottom:1px solid #EBEBEB;display:flex;align-items:center;gap:6px;">
+            <div style="width:10px;height:10px;border-radius:50%;background:#EE0A24;"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:#FF976A;"></div>
+            <div style="width:10px;height:10px;border-radius:50%;background:#07C160;"></div>
+            <div style="flex:1;background:white;border-radius:4px;padding:3px 10px;color:#999;margin-left:8px;font-size:11px;">project-manager.dcloud.net.cn</div>
+          </div>
+          <!-- 应用顶栏 -->
+          <div style="background:#1677FF;color:white;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:20px;height:20px;background:rgba(255,255,255,0.3);border-radius:4px;"></div>
+              <span style="font-weight:600;font-size:12px;">室内设计管理系统</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;opacity:0.9;">
+              <span>Sue</span>
+              <span>退出</span>
+            </div>
+          </div>
+          <!-- 主体 -->
+          <div style="display:flex;height:220px;">
+            <!-- 侧边栏 -->
+            <div style="width:120px;background:#001529;padding:12px 0;flex-shrink:0;">
+              <div style="padding:6px 14px;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.5px;">主导航</div>
+              <div style="padding:8px 14px;font-size:11px;color:rgba(255,255,255,0.65);">📊 首页</div>
+              <div style="padding:8px 14px;font-size:11px;color:rgba(255,255,255,0.65);">👥 客户管理</div>
+              <div style="padding:8px 14px;font-size:11px;color:rgba(255,255,255,0.65);">📁 项目管理</div>
+              <div style="padding:8px 14px;font-size:11px;color:white;background:rgba(255,255,255,0.1);border-right:3px solid #1677FF;">💸 费用管理</div>
+              <div style="padding:8px 14px;font-size:11px;color:rgba(255,255,255,0.65);">📈 报表统计</div>
+              <div style="padding:8px 14px;font-size:11px;color:rgba(255,255,255,0.65);">⚙️ 系统设置</div>
+            </div>
+            <!-- 内容区 -->
+            <div style="flex:1;background:#F0F2F5;padding:12px;overflow:hidden;">
+              <!-- 面包屑 -->
+              <div style="font-size:11px;color:#999;margin-bottom:8px;">费用管理 &gt; 费用列表</div>
+              <!-- 工具栏 -->
+              <div style="background:white;border-radius:6px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <div style="display:flex;gap:6px;">
+                  <div style="background:#F7F8FA;border:1px solid #EBEBEB;border-radius:4px;padding:4px 10px;font-size:11px;color:#666;">🔍 搜索...</div>
+                  <div style="background:#F7F8FA;border:1px solid #EBEBEB;border-radius:4px;padding:4px 10px;font-size:11px;color:#666;">筛选</div>
+                </div>
+                <div style="background:#1677FF;color:white;border-radius:4px;padding:4px 10px;font-size:11px;">+ 新建费用</div>
+              </div>
+              <!-- 表格 -->
+              <div style="background:white;border-radius:6px;overflow:hidden;">
+                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;padding:7px 12px;background:#F7F8FA;border-bottom:2px solid #EBEBEB;font-size:10px;font-weight:600;color:#666;">
+                  <span>费用说明</span><span>金额</span><span>类别</span><span>状态</span><span>操作</span>
+                </div>
+                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;padding:7px 12px;border-bottom:1px solid #F5F5F5;font-size:10px;color:#333;">
+                  <span>北京XX材料费</span><span style="color:#1A1A1A;font-weight:500;">¥12,500</span><span>材料费</span><span style="color:#07C160;">已核销</span><span style="color:#1677FF;">查看 编辑</span>
+                </div>
+                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;padding:7px 12px;border-bottom:1px solid #F5F5F5;font-size:10px;color:#333;background:#FFF9F0;">
+                  <span>外包设计费</span><span style="color:#1A1A1A;font-weight:500;">¥8,000</span><span>外包费</span><span style="color:#FF976A;">待核销</span><span style="color:#1677FF;">查看 编辑</span>
+                </div>
+                <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 80px;padding:7px 12px;font-size:10px;color:#333;">
+                  <span>施工人工费</span><span style="color:#1A1A1A;font-weight:500;">¥35,000</span><span>人工费</span><span style="color:#1677FF;">进行中</span><span style="color:#1677FF;">查看 编辑</span>
+                </div>
+              </div>
+              <!-- 分页 -->
+              <div style="padding:6px 0;display:flex;justify-content:flex-end;align-items:center;gap:4px;font-size:10px;color:#666;">
+                <span>共 48 条</span>
+                <div style="padding:2px 6px;border:1px solid #EBEBEB;border-radius:3px;background:#1677FF;color:white;">1</div>
+                <div style="padding:2px 6px;border:1px solid #EBEBEB;border-radius:3px;">2</div>
+                <div style="padding:2px 6px;border:1px solid #EBEBEB;border-radius:3px;">3</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px;font-size:12px;color:#999;">最小支持宽度 1200px，侧边栏固定 240px（示意图等比缩小）</div>
+      </div>
+    </div>
+
+    <!-- 三种页面模式 -->
+    <div style="background:white;border-radius:12px;padding:24px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">三种核心页面模式</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <!-- 列表页 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;overflow:hidden;">
+          <div style="background:#F3F0FF;padding:10px 14px;font-size:12px;font-weight:600;color:#7C3AED;">① 列表页（各模块主页）</div>
+          <div style="padding:14px;font-size:12px;color:#555;display:flex;flex-direction:column;gap:8px;">
+            <div style="background:#F7F8FA;border-radius:4px;padding:7px 10px;display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:#333;font-weight:500;">页面标题</span>
+              <div style="display:flex;gap:4px;">
+                <div style="background:white;border:1px solid #EBEBEB;border-radius:3px;padding:2px 8px;font-size:11px;">🔍搜索</div>
+                <div style="background:#1677FF;color:white;border-radius:3px;padding:2px 8px;font-size:11px;">+ 新建</div>
+              </div>
+            </div>
+            <div style="border:1px solid #EBEBEB;border-radius:4px;overflow:hidden;">
+              <div style="background:#F7F8FA;padding:5px 10px;font-size:11px;color:#666;font-weight:600;">列名 ↕ / 列名 ↕ / 列名 ↕ / 操作</div>
+              <div style="padding:5px 10px;font-size:11px;border-bottom:1px solid #F5F5F5;">数据行 ... <span style="color:#1677FF;float:right;">查看 编辑 <span style="color:#EE0A24;">删除</span></span></div>
+              <div style="padding:5px 10px;font-size:11px;background:#FAFAFA;">数据行 ... <span style="color:#1677FF;float:right;">查看 编辑 <span style="color:#EE0A24;">删除</span></span></div>
+            </div>
+            <div style="text-align:right;font-size:11px;color:#999;">共 XX 条 &nbsp; &lt; 1 2 3 &gt;</div>
+          </div>
+          <div style="padding:0 14px 12px;font-size:11px;color:#999;">分页器，每页 20 条</div>
+        </div>
+        <!-- 表单页 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;overflow:hidden;">
+          <div style="background:#F3F0FF;padding:10px 14px;font-size:12px;font-weight:600;color:#7C3AED;">② 表单页（新建/编辑）</div>
+          <div style="padding:14px;font-size:12px;color:#555;display:flex;flex-direction:column;gap:8px;">
+            <div style="font-size:11px;color:#999;">列表 &gt; 新建</div>
+            <div style="border:1px solid #EBEBEB;border-radius:4px;padding:10px;max-width:100%;">
+              <div style="font-size:11px;color:#666;font-weight:600;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #F5F5F5;">基本信息</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+                <div><div style="font-size:10px;color:#666;margin-bottom:3px;">字段名</div><div style="border:1px solid #EBEBEB;border-radius:3px;padding:5px 8px;font-size:11px;color:#999;">输入...</div></div>
+                <div><div style="font-size:10px;color:#666;margin-bottom:3px;">字段名</div><div style="border:1px solid #EBEBEB;border-radius:3px;padding:5px 8px;font-size:11px;color:#999;">输入...</div></div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;border-top:1px solid #F5F5F5;padding-top:8px;">
+              <div style="border:1px solid #EBEBEB;border-radius:3px;padding:4px 12px;font-size:11px;color:#666;">取消</div>
+              <div style="background:#1677FF;color:white;border-radius:3px;padding:4px 12px;font-size:11px;">保存</div>
+            </div>
+          </div>
+          <div style="padding:0 14px 12px;font-size:11px;color:#999;">最大宽度 800px，居中布局</div>
+        </div>
+        <!-- 报表页 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;overflow:hidden;">
+          <div style="background:#E8F8EF;padding:10px 14px;font-size:12px;font-weight:600;color:#07C160;">③ 报表页</div>
+          <div style="padding:14px;font-size:12px;color:#555;display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <div style="display:flex;gap:4px;">
+                <div style="padding:3px 8px;background:#1677FF;color:white;border-radius:3px;font-size:11px;">本月</div>
+                <div style="padding:3px 8px;background:#F7F8FA;border:1px solid #EBEBEB;border-radius:3px;font-size:11px;">本季</div>
+                <div style="padding:3px 8px;background:#F7F8FA;border:1px solid #EBEBEB;border-radius:3px;font-size:11px;">本年</div>
+              </div>
+              <div style="padding:3px 8px;background:#07C160;color:white;border-radius:3px;font-size:11px;">↓ 导出</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+              <div style="background:#E6F0FF;border-radius:4px;padding:8px;text-align:center;"><div style="font-size:10px;color:#666;">应收</div><div style="font-size:14px;font-weight:600;color:#1677FF;">¥84,000</div></div>
+              <div style="background:#E8F8EF;border-radius:4px;padding:8px;text-align:center;"><div style="font-size:10px;color:#666;">已收</div><div style="font-size:14px;font-weight:600;color:#07C160;">¥61,000</div></div>
+              <div style="background:#FFF3EC;border-radius:4px;padding:8px;text-align:center;"><div style="font-size:10px;color:#666;">应付</div><div style="font-size:14px;font-weight:600;color:#FF976A;">¥45,500</div></div>
+              <div style="background:#F7F8FA;border-radius:4px;padding:8px;text-align:center;"><div style="font-size:10px;color:#666;">已付</div><div style="font-size:14px;font-weight:600;color:#333;">¥32,000</div></div>
+            </div>
+          </div>
+          <div style="padding:0 14px 12px;font-size:11px;color:#999;">SheetJS 前端生成 Excel，无需后端文件服务</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 后端规范 -->
+    <div style="background:white;border-radius:12px;padding:24px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:4px;">后端规范</h3>
+      <p style="font-size:13px;color:#999;margin-bottom:20px;">基于 uniCloud + uni-admin，PC 端与小程序端共用同一套后端</p>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+
+        <!-- 认证 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="background:#F3F0FF;color:#7C3AED;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;">认证</span>
+            <span style="font-size:13px;font-weight:600;">uni-id 用户体系</span>
+          </div>
+          <div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:6px;">
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">登录方式</div>
+              <div style="color:#666;">用户名/密码（PC端），微信授权（小程序端）</div>
+              <div style="color:#666;">同一 uni-id 用户表，账号互通</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">Token 管理</div>
+              <div style="color:#666;">uni-id 自动签发 token，存 localStorage</div>
+              <div style="color:#666;">token 过期自动跳转登录页</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">Phase 2</div>
+              <div style="color:#9CA3AF;">小程序扫码登录 PC 端（uni-id 已内置能力）</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 权限 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="background:#F3F0FF;color:#7C3AED;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;">权限</span>
+            <span style="font-size:13px;font-weight:600;">角色权限架子</span>
+          </div>
+          <div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:6px;">
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">MVP 策略</div>
+              <div style="color:#666;">所有用户默认全部权限，权限数据模型预留</div>
+              <div style="color:#666;">uni-admin 菜单权限表直接复用</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">云函数鉴权</div>
+              <div style="color:#666;">所有写操作云函数校验登录态</div>
+              <div style="color:#666;font-family:monospace;font-size:11px;">uni-id-common 中间件统一处理</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">Phase 2</div>
+              <div style="color:#9CA3AF;">细粒度角色配置，小程序端同步遵守</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据访问 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="background:#E6F0FF;color:#1677FF;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;">数据</span>
+            <span style="font-size:13px;font-weight:600;">uniCloud 数据访问规范</span>
+          </div>
+          <div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:6px;">
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">列表查询</div>
+              <div style="color:#666;">使用 <code style="background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:2px;">uniCloud-db</code> 组件直接绑定集合</div>
+              <div style="color:#666;">前端声明式查询，减少手写云函数</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">写操作</div>
+              <div style="color:#666;">新建/编辑/删除统一走云函数</div>
+              <div style="color:#666;">云函数内校验权限 + 写入操作日志</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">PC/小程序 共用</div>
+              <div style="color:#666;">同一套云函数，入参加 <code style="background:rgba(0,0,0,0.05);padding:1px 4px;border-radius:2px;">platform</code> 字段区分来源</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 操作日志 & 导出 -->
+        <div style="border:1px solid #EBEBEB;border-radius:8px;padding:16px;">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="background:#E8F8EF;color:#07C160;padding:3px 8px;border-radius:4px;font-size:12px;font-weight:600;">日志 &amp; 导出</span>
+            <span style="font-size:13px;font-weight:600;">内置能力直接复用</span>
+          </div>
+          <div style="font-size:12px;color:#555;display:flex;flex-direction:column;gap:6px;">
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">操作日志</div>
+              <div style="color:#666;">uni-admin 内置日志模块，自动记录操作人/时间/内容</div>
+              <div style="color:#666;">MVP 不暴露 UI，Phase 2 直接启用查看界面</div>
+            </div>
+            <div style="padding:8px;background:#F7F8FA;border-radius:5px;">
+              <div style="font-weight:600;margin-bottom:3px;">Excel 导出</div>
+              <div style="color:#666;">前端 SheetJS 生成，通过权限校验后触发下载</div>
+              <div style="color:#666;">不依赖后端文件服务，零额外成本</div>
+            </div>
+            <div style="padding:8px;background:#E8F8EF;border-radius:5px;border:1px solid #C3EDDB;">
+              <div style="font-weight:600;color:#07C160;margin-bottom:3px;">✓ 主色覆盖方式</div>
+              <div style="color:#333;font-family:monospace;font-size:11px;">uni.scss: $uni-primary: #1677FF;</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 交互差异对比 -->
+    <div style="background:white;border-radius:12px;padding:24px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">PC 端 vs 移动端交互差异</h3>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <thead>
+          <tr style="background:#F7F8FA;">
+            <th style="padding:10px 14px;text-align:left;border-bottom:2px solid #EBEBEB;width:18%;">交互项</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:2px solid #EBEBEB;">📱 移动端（小程序）</th>
+            <th style="padding:10px 14px;text-align:left;border-bottom:2px solid #EBEBEB;">🖥️ PC 端（uni-admin）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">分页</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">上拉加载更多</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">分页器（每页 20 条，显示总数）</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">操作触发</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">左滑暴露操作</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">行尾文字按钮（查看 / 编辑 / <span style="color:#EE0A24;">删除</span>）</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">表单</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">底部 Action Sheet 滑入</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">独立表单页（路由跳转），最大宽 800px 居中</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">确认弹窗</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">底部 Action Sheet</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">标准 Modal 居中弹窗</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">搜索</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">2字实时模糊搜索</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">搜索框 + 回车/点击触发</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">成功反馈</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">Toast 2秒消失</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#07C160;">Toast 2秒消失（一致）</td></tr>
+          <tr><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;font-weight:600;">行 hover</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#9CA3AF;">不适用</td><td style="padding:10px 14px;border-bottom:1px solid #F5F5F5;color:#555;">背景色 <code style="background:rgba(0,0,0,0.04);padding:1px 4px;border-radius:2px;">#F7F8FA</code> hover 态，辅助视线</td></tr>
+          <tr><td style="padding:10px 14px;font-weight:600;">不实现</td><td style="padding:10px 14px;color:#9CA3AF;">—</td><td style="padding:10px 14px;color:#EE0A24;font-size:12px;">触控手势 / QuickEntryBar / 微信服务通知</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MVP 页面范围 -->
+    <div style="background:white;border-radius:12px;padding:24px;margin-bottom:8px;">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:16px;">MVP 页面范围</h3>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;">
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">🔐</div>
+          <div style="font-size:12px;font-weight:600;">登录页</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">用户名/密码</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">👥</div>
+          <div style="font-size:12px;font-weight:600;">客户管理</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">搜索+CRUD</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">🏪</div>
+          <div style="font-size:12px;font-weight:600;">供应商管理</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">CRUD+支付记录</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">📁</div>
+          <div style="font-size:12px;font-weight:600;">项目管理</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">筛选+CRUD+归档</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">💸</div>
+          <div style="font-size:12px;font-weight:600;">费用管理</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">CRUD+核销记录</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">💰</div>
+          <div style="font-size:12px;font-weight:600;">收款管理</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">CRUD+逾期查看</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;background:#E8F8EF;">
+          <div style="font-size:18px;margin-bottom:4px;">📈</div>
+          <div style="font-size:12px;font-weight:600;color:#07C160;">基础报表</div>
+          <div style="font-size:11px;color:#07C160;margin-top:4px;">应收应付+导出</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">👤</div>
+          <div style="font-size:12px;font-weight:600;">用户账号</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">创建/编辑/禁用</div>
+        </div>
+        <div style="border:2px solid #07C160;border-radius:8px;padding:12px;text-align:center;">
+          <div style="font-size:18px;margin-bottom:4px;">⚙️</div>
+          <div style="font-size:12px;font-weight:600;">系统设置</div>
+          <div style="font-size:11px;color:#666;margin-top:4px;">类别+阶段配置</div>
+        </div>
+        <div style="border:2px dashed #EBEBEB;border-radius:8px;padding:12px;text-align:center;background:#F9FAFB;">
+          <div style="font-size:18px;margin-bottom:4px;opacity:0.4;">🔧</div>
+          <div style="font-size:12px;font-weight:600;color:#CCC;">Phase 2 预留</div>
+          <div style="font-size:11px;color:#CCC;margin-top:4px;">批量/审核/权限</div>
+        </div>
+      </div>
+      <div style="padding:10px 14px;background:#FFF9F0;border-radius:6px;font-size:12px;color:#666;">
+        <strong style="color:#FF976A;">Phase 2 入口处理：</strong>菜单中显示但点击后显示「功能开发中，敬请期待」页面，不硬编码隐藏，方便后续直接替换。
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function showDir(dir, tab) {
+    document.querySelectorAll('.direction-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('dir-' + dir).classList.add('active');
+    tab.classList.add('active');
+  }
+</script>
+</body>
+</html>

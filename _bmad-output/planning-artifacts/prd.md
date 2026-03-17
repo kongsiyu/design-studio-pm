@@ -1,7 +1,13 @@
 ---
-stepsCompleted: [step-01-init, step-02-discovery, step-02b-vision, step-02c-executive-summary, step-03-success, step-04-journeys, step-05-domain, step-06-innovation, step-07-project-type, step-08-scoping, step-09-functional, step-10-nonfunctional, step-11-polish]
+stepsCompleted: [step-01-init, step-02-discovery, step-02b-vision, step-02c-executive-summary, step-03-success, step-04-journeys, step-05-domain, step-06-innovation, step-07-project-type, step-08-scoping, step-09-functional, step-10-nonfunctional, step-11-polish, edit-e-01, edit-e-02, edit-e-03]
 inputDocuments: []
 workflowType: 'prd'
+lastEdited: '2026-03-17'
+editHistory:
+  - date: '2026-03-17'
+    changes: '添加 PC Web Management Platform 章节，明确 PC 管理后台的完整功能定义和特有业务流程'
+  - date: '2026-03-17'
+    changes: '按 MVP/Phase 2 分层标注 PC 端功能，明确 MVP 只做完整架子（认证、权限架子、单条 CRUD、基础报表），高级功能延至 Phase 2；更新 Project Scoping 章节补充 PC 端 MVP 范围'
 briefCount: 0
 researchCount: 0
 brainstormingCount: 2
@@ -215,6 +221,98 @@ innovationNotes: 快捷且严谨的交互设计创新
 - 依托微信小程序性能有保障
 - 核心操作步骤少于3步
 
+## PC Web Management Platform
+
+### 平台定位
+
+PC Web 端作为管理后台，提供微信小程序中无法便利处理的复杂管理操作。主要用户为设计工作室主理人和财务人员。设计原则：**完整性 > 速度**，支持复杂搜索、批量操作、数据审计。
+
+MVP 阶段目标：建立完整的 PC 端架子（认证、权限架子、数据访问），确保 Phase 2 可直接扩展功能而无需重构。
+
+### PC 端功能范围（按模块）
+
+标注说明：**[MVP]** = 一期必须实现；**[Phase 2]** = 二期扩展
+
+**客户管理：**
+- [MVP] 客户列表查看（支持按名称/联系人搜索）
+- [MVP] 单条客户 CRUD 操作
+- [MVP] 客户分析数据查看（项目数、总金额）
+- [Phase 2] 批量导入/导出（Excel/CSV）
+- [Phase 2] 重复客户检测与合并
+
+**供应商管理：**
+- [MVP] 供应商列表查看与单条 CRUD
+- [MVP] 支付记录查看
+- [Phase 2] 支付记录按日期/金额筛选
+- [Phase 2] 供应商评级/备注
+
+**项目管理：**
+- [MVP] 项目列表查看（支持按客户/状态筛选）
+- [MVP] 项目详情查看与编辑（地址/预算/描述等完整字段）
+- [MVP] 项目创建/删除
+- [MVP] 项目归档管理（查看/恢复归档项目）
+- [Phase 2] 批量操作（状态切换/归档/删除）
+- [Phase 2] 高级搜索/筛选（多条件组合）
+- [Phase 2] 项目数据导出
+
+**费用管理：**
+- [MVP] 费用列表查看与单条 CRUD
+- [MVP] 核销记录查看
+- [MVP] 费用删除后重新录入（数据修正方式）
+- [Phase 2] 费用批量导入（Excel/CSV）
+- [Phase 2] 费用历史追溯（操作人/操作时间/修改记录）
+- [Phase 2] 核销记录修正（撤销后重新核销）
+- [Phase 2] 费用审核流程（查看/修正/批准待审核费用）
+
+**收款管理：**
+- [MVP] 收款记录列表查看与单条 CRUD
+- [MVP] 逾期应收提醒查看
+- [Phase 2] 收款计划配置（定义分阶段收款比例和金额）
+- [Phase 2] 收款对账（将实际收款与计划对应）
+- [Phase 2] 收款计划调整
+
+**报表统计：**
+- [MVP] 基础报表查看（应收应付、实收实付）
+- [MVP] 数据导出 Excel（简单表格格式）
+- [Phase 2] 高级报表（按项目/客户/时间段分组）
+- [Phase 2] 钻取分析（报表数据逐级展开明细）
+- [Phase 2] 时间段对比（同比/环比）
+- [Phase 2] 利润分析、现金流趋势
+- [Phase 2] 自定义报表字段、PDF 导出
+
+**系统功能：**
+- [MVP] 用户账号管理（创建/编辑/删除/禁用用户）
+- [MVP] 权限角色架子（数据模型预留，MVP 所有用户默认全部权限）
+- [MVP] 系统设置（费用类别配置、应收阶段定义）
+- [MVP] 操作日志记录（后台静默记录，MVP 不对外展示）
+- [Phase 2] 角色权限细粒度配置（定义各角色可访问的功能和数据范围）
+- [Phase 2] 数据审计日志查看界面
+- [Phase 2] 数据备份（手动触发或定时备份）
+
+### PC 端不提供的功能
+
+- 不支持移动设备交互优化（仅桌面浏览器）
+- 不支持实时推送通知（仅微信小程序）
+- 不支持相机/相册操作（仅微信小程序）
+
+### PC 端认证机制
+
+- [MVP] PC 端用户账号与小程序账号统一（同一套用户体系）
+- [MVP] PC 端采用用户名/密码登录（不依赖微信环境）
+- [Phase 2] 支持小程序扫码登录 PC 端
+
+### PC 端特有的业务流程
+
+**数据管理（MVP）：** 主理人可在 PC 端对各模块数据进行完整的查看和编辑，补充小程序端不便处理的复杂操作。
+
+**费用审核流程（Phase 2）：** 财务人员可在 PC 端批量查看待审核费用，进行修正、拒绝或批准。
+
+**数据对账（Phase 2）：** 支持银行流水与费用的对账，允许撤销已核销记录后重新核销。
+
+**权限管理（Phase 2）：** 管理员可配置各用户角色的功能权限和数据访问范围，小程序端同步遵守权限规则。
+
+**数据审计（Phase 2）：** 查看所有数据修改记录，追溯操作人、操作时间和操作内容。
+
 ## Project Scoping & Phased Development
 
 ### MVP Strategy & Philosophy
@@ -231,7 +329,7 @@ innovationNotes: 快捷且严谨的交互设计创新
 - 收款记录（定金/中期款/尾款）
 - 基础报表统计
 
-**Must-Have Capabilities:**
+**Must-Have Capabilities - 微信小程序端：**
 - 客户管理（CRUD）
 - 供应商管理（CRUD）
 - 项目管理（7阶段：立项→需求确认→施工→验收→结算→维保→归档）
@@ -239,9 +337,22 @@ innovationNotes: 快捷且严谨的交互设计创新
 - 收款管理（定金/中期款/尾款）
 - 基础报表（应收应付、实收实付）
 
+**Must-Have Capabilities - PC Web 管理后台（MVP 架子）：**
+- 完整的 PC Web 应用架子（认证、路由、权限数据模型）
+- 用户名/密码登录（与小程序同一用户体系）
+- 各模块数据列表查看和单条 CRUD
+- 基础报表查看和 Excel 导出
+- 用户账号管理（创建/编辑/禁用）
+- 系统设置（费用类别、应收阶段定义）
+- 操作日志静默记录（后台记录，不展示界面）
+
 ### Post-MVP Features
 
 **Phase 2 (Growth):**
+- PC 端高级功能（批量操作、高级搜索、复杂报表、数据审计日志界面）
+- PC 端费用审核流程和数据对账
+- PC 端角色权限细粒度配置（小程序端同步遵守）
+- PC 端小程序扫码登录
 - 报表增强（利润分析、现金流趋势）
 - 合同管理基础功能
 - 发票管理
