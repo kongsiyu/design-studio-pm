@@ -1,41 +1,31 @@
 <template>
-  <view class="content">
-    <image class="logo" src="/static/logo.png" />
-    <view class="text-area">
-      <text class="title">{{ title }}</text>
-    </view>
+  <view class="container">
+    <text class="title">设计工作室</text>
+    <text class="subtitle">项目管理系统</text>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-const title = ref('Hello')
 </script>
 
 <style>
-.content {
+.container {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.logo {
-  height: 200rpx;
-  width: 200rpx;
-  margin-top: 200rpx;
-  margin-left: auto;
-  margin-right: auto;
-  margin-bottom: 50rpx;
-}
-
-.text-area {
-  display: flex;
-  justify-content: center;
+  padding-top: 200rpx;
 }
 
 .title {
-  font-size: 36rpx;
-  color: #8f8f94;
+  font-size: 48rpx;
+  color: #1A1A1A;
+  font-weight: bold;
+}
+
+.subtitle {
+  font-size: 28rpx;
+  color: #666666;
+  margin-top: 16rpx;
 }
 </style>
